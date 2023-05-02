@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { theme } from "~/theme";
+import axios from "axios";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +19,25 @@ const queryClient = new QueryClient({
 //   const { worker } = await import("./mocks/browser");
 //   worker.start({ onUnhandledRequest: "bypass" });
 // }
+
+axios.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    const code = error.response.status;
+    if (code === 401) {
+      alert("HTTP 401 Unauthorized. Provide credentials.");
+    }
+    if (code === 403) {
+      alert("HTTP 403 Forbidden. Incorrect credentials.");
+    }
+    if (code === 400) {
+      alert(error.response.data?.data);
+    }
+    return Promise.reject(error.response);
+  }
+);
 
 const container = document.getElementById("app");
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
