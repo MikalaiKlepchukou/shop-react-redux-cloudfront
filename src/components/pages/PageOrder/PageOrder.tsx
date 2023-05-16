@@ -14,12 +14,12 @@ import MenuItem from "@mui/material/MenuItem";
 import { Field, Form, Formik, FormikProps } from "formik";
 import Grid from "@mui/material/Grid";
 import TextField from "~/components/Form/TextField";
-import Table from "@mui/material/Table";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import TableCell from "@mui/material/TableCell";
-import TableBody from "@mui/material/TableBody";
-import TableContainer from "@mui/material/TableContainer";
+// import Table from "@mui/material/Table";
+// import TableHead from "@mui/material/TableHead";
+// import TableRow from "@mui/material/TableRow";
+// import TableCell from "@mui/material/TableCell";
+// import TableBody from "@mui/material/TableBody";
+// import TableContainer from "@mui/material/TableContainer";
 import Box from "@mui/material/Box";
 import { useQueries } from "react-query";
 import { useInvalidateOrder, useUpdateOrderStatus } from "~/queries/orders";
@@ -43,7 +43,7 @@ export default function PageOrder() {
       queryKey: "products",
       queryFn: async () => {
         const res = await axios.get<AvailableProduct[]>(
-          `${API_PATHS.bff}/products`
+          `${API_PATHS.product}/products`
         );
         return res.data;
       },
@@ -57,7 +57,8 @@ export default function PageOrder() {
   const invalidateOrder = useInvalidateOrder();
   const cartItems: CartItem[] = React.useMemo(() => {
     if (order && products) {
-      return order.items.map((item: OrderItem) => {
+      console.log("QQQ", order, products);
+      return order.cart?.items.map((item: OrderItem) => {
         const product = products.find((p) => p.id === item.productId);
         if (!product) {
           throw new Error("Product not found");
@@ -70,24 +71,27 @@ export default function PageOrder() {
 
   if (isOrderLoading || isProductsLoading) return <p>loading...</p>;
 
-  const statusHistory = order?.statusHistory || [];
+  // const statusHistory = order?.statusHistory || [];
 
-  const lastStatusItem = statusHistory[statusHistory.length - 1];
+  const lastStatusItem =
+    order && order?.status === OrderStatus.OPEN
+      ? OrderStatus.OPEN
+      : OrderStatus.ORDERED;
 
   return order ? (
     <PaperLayout>
       <Typography component="h1" variant="h4" align="center">
         Manage order
       </Typography>
-      <ReviewOrder address={order.address} items={cartItems} />
+      <ReviewOrder address={JSON.parse(order.delivery)} items={cartItems} />
       <Typography variant="h6">Status:</Typography>
       <Typography variant="h6" color="primary">
-        {lastStatusItem?.status.toUpperCase()}
+        {order?.status.toUpperCase()}
       </Typography>
       <Typography variant="h6">Change status:</Typography>
       <Box py={2}>
         <Formik
-          initialValues={{ status: lastStatusItem.status, comment: "" }}
+          initialValues={{ status: lastStatusItem, comment: "" }}
           enableReinitialize
           onSubmit={(values) =>
             updateOrderStatus(
@@ -107,7 +111,7 @@ export default function PageOrder() {
                     select
                     fullWidth
                     helperText={
-                      values.status === OrderStatus.Approved
+                      values.status === OrderStatus.OPEN
                         ? "Setting status to APPROVED will decrease products count from stock"
                         : undefined
                     }
@@ -144,7 +148,7 @@ export default function PageOrder() {
           )}
         </Formik>
       </Box>
-      <Typography variant="h6">Status history:</Typography>
+      {/* <Typography variant="h6">Status history:</Typography>
       <TableContainer>
         <Table aria-label="simple table">
           <TableHead>
@@ -168,7 +172,7 @@ export default function PageOrder() {
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </TableContainer> */}
     </PaperLayout>
   ) : null;
 }
